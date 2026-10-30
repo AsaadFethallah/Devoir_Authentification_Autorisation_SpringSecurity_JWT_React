@@ -1,0 +1,781 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{article}
+
+%------------------------------------------------------------
+% Polices et langue
+%------------------------------------------------------------
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}[SmallCapsFont={Latin Modern Roman Caps}]
+\setsansfont{Latin Modern Sans}
+\setmonofont[Scale=0.86]{DejaVu Sans Mono}
+\usepackage[french]{babel}
+
+%------------------------------------------------------------
+% Mise en page
+%------------------------------------------------------------
+\usepackage[a4paper,margin=2.4cm,headheight=22pt]{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\setstretch{1.08}
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=4pt}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage{fancyvrb}
+\usepackage{seqsplit}
+\usepackage{needspace}
+\emergencystretch=3em
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.multipart,fit,backgrounds}
+\usepackage[hidelinks]{hyperref}
+
+%------------------------------------------------------------
+% Couleurs
+%------------------------------------------------------------
+\definecolor{primary}{HTML}{1F3A5F}
+\definecolor{accent}{HTML}{2A7F9E}
+\definecolor{soft}{HTML}{EAF1F7}
+\definecolor{softgrey}{HTML}{F4F4F4}
+\definecolor{okgreen}{HTML}{2E7D32}
+
+\hypersetup{colorlinks=true,linkcolor=primary,urlcolor=accent,citecolor=primary,
+  pdftitle={Authentification et autorisation avec Spring Security, JWT et React},
+  pdfauthor={Asaad FETHALLAH}}
+
+%------------------------------------------------------------
+% Titres
+%------------------------------------------------------------
+\titleformat{\section}{\Large\bfseries\color{primary}}{\thesection}{0.7em}{}[\vspace{-0.4em}{\color{primary}\titlerule[0.8pt]}]
+\titleformat{\subsection}{\large\bfseries\color{primary}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{accent}}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.9em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.5em}
+
+%------------------------------------------------------------
+% En-têtes et pieds de page
+%------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{primary} ENSET Mohammedia -- II-CCN3}
+\fancyhead[R]{\small\color{primary} Sécurité des systèmes distribués}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primary}\leaders\hrule height \headrulewidth\hfill}}
+
+%------------------------------------------------------------
+% Légendes
+%------------------------------------------------------------
+\captionsetup{font=small,labelfont={bf,color=primary},labelsep=endash,
+  justification=centering,skip=6pt}
+\captionsetup[table]{position=top}
+
+%------------------------------------------------------------
+% Macros utiles
+%------------------------------------------------------------
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\ra}{\,$\rightarrow$\allowbreak\,}
+\newcommand{\codelong}[1]{\texttt{\expandafter\seqsplit\expandafter{\detokenize{#1}}}}
+\newcommand{\sectionbreak}{\Needspace*{14\baselineskip}}
+\newcommand{\subsectionbreak}{\Needspace*{8\baselineskip}}
+\newcommand{\pass}{\textcolor{okgreen}{\textbf{PASS}}}
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{5pt}
+\newcommand{\hdr}[1]{\textcolor{white}{\textbf{#1}}}
+\newcommand{\tablehead}{\rowcolor{primary}}
+
+\fvset{fontsize=\footnotesize,frame=single,rulecolor=\color{primary!50},
+  framesep=4pt,formatcom=\color{black!85}}
+
+% Insertion d'une capture : si le fichier est absent, un cadre le remplace.
+\newcommand{\capture}[3]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{captures/#1}{%
+      \includegraphics[width=0.96\linewidth,height=8.5cm,keepaspectratio]{captures/#1}}{%
+      \fcolorbox{primary}{softgrey}{\parbox[c][5cm][c]{0.9\linewidth}{\centering
+        \textit{Capture à insérer :}\\[2pt]\code{#1}}}}
+    \caption{#2}\label{#3}
+  \end{figure}}
+
+%============================================================
+\begin{document}
+%============================================================
+
+%------------------------------------------------------------
+% PAGE DE GARDE
+%------------------------------------------------------------
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+\IfFileExists{logo_enset.png}{\includegraphics[height=2.4cm]{logo_enset.png}\par\vspace{0.4cm}}{\vspace*{0.8cm}}
+{\Large\bfseries\color{primary} ENSET Mohammedia\par}
+\vspace{0.15cm}
+{\large Filière II-CCN3\par}
+\vspace{0.5cm}
+{\color{primary}\rule{\linewidth}{1.4pt}}\par
+\vspace{0.7cm}
+{\large\scshape Module\par}
+\vspace{0.1cm}
+{\Large\bfseries\color{primary}\href{https://classroom.google.com/u/0/c/ODg4NTM4MTkzMzQ2}{Sécurité des systèmes distribués}\par}
+\vspace{1.4cm}
+{\large\scshape Devoir d'application\par}
+\vspace{0.5cm}
+{\fontsize{24}{30}\selectfont\bfseries\color{primary}
+Authentification et autorisation\\avec Spring Security, JWT et React\par}
+\vspace{0.6cm}
+{\large Application de déclaration et de suivi d'incidents\par}
+\vspace{0.7cm}
+{\color{primary}\rule{0.45\linewidth}{0.8pt}}\par
+\vspace{1.6cm}
+
+\begin{tabular}{@{}r@{\hspace{1.1em}}l@{}}
+  \textcolor{primary}{\textbf{Réalisé par}}      & \textbf{Asaad FETHALLAH} \\[6pt]
+  \textcolor{primary}{\textbf{Encadrant}}        & Prof.\ Abdelmajid BOUSSELHAM \\[6pt]
+  \textcolor{primary}{\textbf{Filière}}          & II-CCN3 \\[6pt]
+  \textcolor{primary}{\textbf{Établissement}}    & ENSET Mohammedia \\[6pt]
+  \textcolor{primary}{\textbf{Projet}}           & \code{incidents-api} et \code{incidents-front} \\
+\end{tabular}
+
+\vfill
+{\large\bfseries Année universitaire 2026/2027\par}
+\vspace{0.2cm}
+{\normalsize Octobre 2026\par}
+\vspace{0.5cm}
+\end{titlepage}
+
+%------------------------------------------------------------
+% SOMMAIRE
+%------------------------------------------------------------
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{Sommaire}
+{\small\setstretch{1.0}\tableofcontents}
+\clearpage
+
+%============================================================
+\section{Introduction et objectifs}
+%============================================================
+
+Nous avons réalisé une application de déclaration et de suivi d'incidents de sécurité. Elle associe une API Spring Boot à une interface React. L'accès à l'API est protégé par Spring Security et par des jetons JWT.
+
+Nos objectifs sont les suivants :
+\begin{itemize}
+  \item authentifier les utilisateurs et distinguer les rôles \code{EMPLOYEE}, \code{TECHNICIAN} et \code{ADMIN} ;
+  \item permettre à un employé de déclarer et de suivre ses incidents ;
+  \item permettre à un administrateur de consulter la file globale et d'affecter les incidents ;
+  \item permettre au technicien affecté de faire progresser le traitement ;
+  \item contrôler le propriétaire de chaque incident ;
+  \item conserver un historique des changements et des notes de traitement ;
+  \item vérifier les règles de sécurité avec des tests automatisés.
+\end{itemize}
+
+%============================================================
+\section{Architecture et technologies}
+%============================================================
+
+\subsection{Architecture en couches}
+
+Nous avons organisé le backend en plusieurs couches :
+\begin{enumerate}
+  \item les contrôleurs exposent les routes HTTP ;
+  \item Spring Security filtre et authentifie la requête ;
+  \item les services appliquent les règles métier ;
+  \item les repositories Spring Data JPA accèdent aux entités ;
+  \item H2 est utilisé avec le profil de développement et MySQL est prévu avec le profil \code{mysql}.
+\end{enumerate}
+
+Le frontend React appelle l'API avec Axios. Les diagrammes de ce rapport décrivent l'architecture générale, les entités et le renouvellement de session.
+
+\subsection{Technologies utilisées}
+
+\begin{table}[H]
+\centering
+\caption{Technologies du projet}\label{tab:techno}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}X@{}}
+\tablehead \hdr{Domaine} & \hdr{Technologie} \\
+Backend      & Java 17, Spring Boot 3.5.6 \\
+\rowcolor{soft} Sécurité     & Spring Security, JJWT 0.12.6, BCrypt \\
+Persistance  & Spring Data JPA, H2 en développement, MySQL par profil \\
+\rowcolor{soft} Validation   & Jakarta Validation \\
+Frontend     & React 19.1.1, React Router 7.9.4, Vite 7.1.7 \\
+\rowcolor{soft} Client HTTP  & Axios 1.8.4 \\
+\end{tabularx}
+\end{table}
+
+\subsection{Diagramme d'architecture générale}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small, >=Latex,
+  box/.style={draw=primary, rounded corners=3pt, fill=soft, align=center,
+              minimum height=0.95cm, inner sep=4pt},
+  wide/.style={box, text width=8.6cm},
+  ctrl/.style={box, text width=3.35cm, font=\sffamily\footnotesize, fill=white},
+  helper/.style={box, text width=3.6cm, fill=white, draw=accent, font=\sffamily\footnotesize},
+  flow/.style={->, thick, color=primary},
+  dflow/.style={<->, dashed, color=accent, thick}]
+
+  \node[wide, fill=primary, text=white, draw=primary] (browser) at (0,0)
+    {\textbf{Navigateur -- application React}\\[-1pt]\footnotesize Axios : intercepteurs de requête et de réponse};
+  \node[wide] (cors) at (0,-1.75) {CORS\\[-1pt]\footnotesize origine autorisée~: http{:}//localhost{:}5173};
+  \node[wide] (filter) at (0,-3.5) {\textbf{JwtAuthenticationFilter}\\[-1pt]\footnotesize validation du JWT, rechargement de l'utilisateur};
+  \node[wide] (sec) at (0,-5.25) {\textbf{Spring Security}\\[-1pt]\footnotesize session STATELESS, sécurité par méthode};
+
+  \node[ctrl] (c1) at (-5.6,-7.4) {\textbf{AuthController}\\ \footnotesize /auth/**};
+  \node[ctrl] (c2) at (-1.85,-7.4) {\textbf{ProfileController}\\ \footnotesize /api/profile/**};
+  \node[ctrl] (c3) at (1.9,-7.4) {\textbf{IncidentController}\\ \footnotesize /api/incidents/**};
+  \node[ctrl] (c4) at (5.65,-7.4) {\textbf{AdminController}\\ \footnotesize /api/admin/**};
+
+  \node[wide] (svc) at (-1.9,-9.55) {\textbf{Services}\\[-1pt]\footnotesize Auth, Profile, Incident, Admin\\[-1pt]\footnotesize règles métier et contrôle du propriétaire};
+  \node[wide] (repo) at (-1.9,-11.5) {\textbf{Repositories Spring Data JPA}};
+  \node[wide, fill=softgrey] (db) at (-1.9,-13.1) {\textbf{Base de données}\\[-1pt]\footnotesize H2 (développement) / MySQL (profil mysql)};
+
+  \node[helper] (h1) at (5.0,-8.95) {\textbf{CurrentUserService}\\ \footnotesize SecurityContextHolder};
+  \node[helper] (h2) at (5.0,-10.3) {\textbf{JwtService}\\ \footnotesize access token JWT (HS256)};
+  \node[helper] (h3) at (5.0,-11.65) {\textbf{RefreshTokenService}\\ \footnotesize rotation et révocation};
+
+  \draw[flow] (browser) -- (cors);
+  \draw[flow] (cors) -- (filter);
+  \draw[flow] (filter) -- (sec);
+  \foreach \c in {c1,c2,c3,c4} { \draw[flow] (sec.south) -- (\c.north); }
+  \foreach \c in {c1,c2,c3,c4} { \draw[flow] (\c.south) -- (svc.north); }
+  \draw[flow] (svc) -- (repo);
+  \draw[flow] (repo) -- (db);
+  \draw[dflow] (svc.east) -- ++(0.45,0) |- (h1.west);
+  \draw[dflow] (svc.east) -- ++(0.45,0) |- (h2.west);
+  \draw[dflow] (svc.east) -- ++(0.45,0) |- (h3.west);
+  \draw[dflow] (h3.south) -- ++(0,-0.35) -| (repo.east);
+\end{tikzpicture}}
+\caption{Architecture générale de l'application (backend Spring Boot et client React)}\label{fig:archi}
+\end{figure}
+
+Nous validons le JWT dans \code{JwtAuthenticationFilter}, puis nous déléguons la requête au contrôleur concerné. Les services appliquent les règles métier avant d'utiliser les repositories. Les contrôleurs renvoient des DTO JSON.
+
+%============================================================
+\section{Modèle de données}
+%============================================================
+
+\subsection{Diagramme des entités}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize, >=Latex,
+  ent/.style={rectangle split, rectangle split parts=2, draw=primary, rounded corners=2pt,
+    rectangle split part fill={primary,white}, align=left, inner sep=4pt, text width=3.9cm},
+  rel/.style={thick, color=primary},
+  lab/.style={font=\sffamily\scriptsize, inner sep=1.5pt, fill=white, text=primary}]
+
+  \node[ent] (inc) at (0,0) {\textcolor{white}{\textbf{INCIDENT}}
+    \nodepart{second}
+    \begin{tabular}{@{}l@{}}
+      id \textit{(PK)}\\ title\\ description\\ category\\ priority\\ status\\
+      createdAt\\ updatedAt\\ created\_by\_id \textit{(FK)}\\ assigned\_to\_id \textit{(FK)}
+    \end{tabular}};
+
+  \node[ent] (hist) at (-5.9,0.9) {\textcolor{white}{\textbf{INCIDENT\_HISTORY}}
+    \nodepart{second}
+    \begin{tabular}{@{}l@{}}
+      id \textit{(PK)}\\ incident\_id \textit{(FK)}\\ eventDate\\ actionText\\ author\_id \textit{(FK)}
+    \end{tabular}};
+
+  \node[ent] (com) at (5.9,0.9) {\textcolor{white}{\textbf{INCIDENT\_COMMENT}}
+    \nodepart{second}
+    \begin{tabular}{@{}l@{}}
+      id \textit{(PK)}\\ incident\_id \textit{(FK)}\\ author\_id \textit{(FK)}\\ content\\ createdAt
+    \end{tabular}};
+
+  \node[ent] (usr) at (0,-5.9) {\textcolor{white}{\textbf{USER}}
+    \nodepart{second}
+    \begin{tabular}{@{}l@{}}
+      id \textit{(PK)}\\ fullName\\ email \textit{(unique)}\\ password \textit{(BCrypt)}\\ role\\ enabled\\ createdAt
+    \end{tabular}};
+
+  \node[ent] (rt) at (5.9,-9.3) {\textcolor{white}{\textbf{REFRESH\_TOKEN}}
+    \nodepart{second}
+    \begin{tabular}{@{}l@{}}
+      id \textit{(PK)}\\ tokenHash\\ user\_id \textit{(FK)}\\ createdAt\\ expiresAt\\ revokedAt
+    \end{tabular}};
+
+  % Incident -- historique / notes
+  \draw[rel] (inc.west |- 0,0.6) -- (hist.east |- 0,0.6)
+    node[lab, near start] {1} node[lab, near end] {0..*};
+  \draw[rel] (inc.east |- 0,0.6) -- (com.west |- 0,0.6)
+    node[lab, near start] {1} node[lab, near end] {0..*};
+
+  % Utilisateur -- incident (créateur / technicien)
+  \draw[rel] ($(usr.north)+(-0.9,0)$) -- ($(inc.south)+(-0.9,0)$)
+    node[lab, near start] {1} node[lab, midway, xshift=-0.9cm] {createdBy} node[lab, near end] {0..*};
+  \draw[rel] ($(usr.north)+(0.9,0)$) -- ($(inc.south)+(0.9,0)$)
+    node[lab, near start] {0..1} node[lab, midway, xshift=1.0cm] {assignedTo} node[lab, near end] {0..*};
+
+  % Utilisateur -- auteur historique / notes
+  \draw[rel] (usr.west) -| (hist.south)
+    node[lab, near start, xshift=-0.2cm] {1} node[lab, near end, yshift=0.3cm] {0..*}
+    node[lab, pos=0.45] {author};
+  \draw[rel] (usr.east) -| ($(com.south)+(0.9,0)$)
+    node[lab, near start, xshift=0.2cm] {1} node[lab, near end, yshift=-0.2cm] {0..*}
+    node[lab, pos=0.45] {author};
+
+  % Utilisateur -- refresh tokens
+  \draw[rel] (usr.south) |- (rt.west)
+    node[lab, near start, xshift=0.3cm] {1} node[lab, near end, yshift=0.3cm] {0..*}
+    node[lab, pos=0.45] {owns};
+\end{tikzpicture}}
+\caption{Modèle des entités et relations JPA}\label{fig:entites}
+\end{figure}
+
+Le schéma représente les tables et les clés étrangères correspondant aux entités Java. Toutes les relations sont déclarées dans l'entité qui porte la clé étrangère.
+
+\subsection{Utilisateur}
+
+L'entité \code{User} contient \code{id}, \code{fullName}, \code{email}, \code{password}, \code{role}, \code{enabled} et \code{createdAt}. L'adresse email est unique. Nous encodons le mot de passe avec \code{BCryptPasswordEncoder} avant l'enregistrement.
+
+Les rôles présents dans le projet sont \code{EMPLOYEE}, \code{TECHNICIAN} et \code{ADMIN}. Lors d'une inscription publique, nous ignorons le champ \code{role} envoyé par le client et nous créons toujours un utilisateur \code{EMPLOYEE}.
+
+\subsection{Incident, historique et notes}
+
+L'entité \code{Incident} contient le titre, la description, la catégorie, la priorité, le statut, les dates de création et de mise à jour, le créateur et le technicien affecté.
+
+\code{IncidentHistory} conserve l'incident, la date, l'action et l'auteur. Nous créons une entrée lors de la déclaration, de l'affectation et des changements d'état.
+
+\code{IncidentComment} conserve une note, son auteur, l'incident et sa date de création. L'ajout d'une note est réservé au technicien affecté ou à l'administrateur.
+
+\subsection{Choix des relations ManyToOne et de LAZY}
+
+Nous avons choisi des relations unidirectionnelles \code{@ManyToOne(fetch = FetchType.LAZY)} depuis les objets dépendants vers leurs parents :
+\begin{itemize}
+  \item \code{Incident.createdBy} et \code{Incident.assignedTo} vers \code{User} ;
+  \item \code{IncidentHistory.incident} et \code{IncidentHistory.author} ;
+  \item \code{IncidentComment.incident} et \code{IncidentComment.author} ;
+  \item \code{RefreshToken.user}.
+\end{itemize}
+
+\paragraph{Rappel des notions.} \code{@ManyToOne} déclare, du côté « plusieurs », la référence vers l'entité parente et porte la clé étrangère. \code{@OneToMany(mappedBy = ...)} déclare, du côté « un », la collection inverse. Le mode \code{EAGER} charge la relation immédiatement avec l'entité, tandis que \code{LAZY} ne la charge qu'au premier accès. Par défaut, JPA charge une relation \code{@ManyToOne} en \code{EAGER} ; nous avons donc indiqué \code{LAZY} explicitement.
+
+\paragraph{Notre choix.} Nous n'avons pas ajouté de collections \code{@OneToMany(mappedBy = ...)} dans \code{User} ou \code{Incident}. Ce choix limite le chargement implicite de grandes collections et évite de parcourir automatiquement tout l'historique, toutes les notes ou tous les incidents d'un utilisateur. Nous récupérons les listes avec les repositories, par exemple \code{findByCreatedById...} ou \code{findByIncidentId...}.
+
+Nous avons choisi \code{LAZY} plutôt que \code{EAGER} pour ne charger les relations que lorsque le service en a besoin. Les services concernés sont transactionnels et les contrôleurs renvoient des DTO, jamais les entités JPA. Cette combinaison limite les boucles JSON et les problèmes de chargement différé lors de la sérialisation. Aucun \code{EAGER} explicite n'est utilisé.
+
+\subsection{Statuts et choix de l'état ASSIGNED}
+
+Les statuts définis par l'application sont \code{OPEN}, \code{ASSIGNED}, \code{IN_PROGRESS}, \code{RESOLVED} et \code{CLOSED}. Nous utilisons \code{ASSIGNED} pour rendre visible l'étape d'affectation avant le traitement technique.
+
+Le §24 du sujet résume le passage après l'affectation par \code{OPEN}\ra\code{IN_PROGRESS}, alors que le §3.5 définit aussi le statut \code{ASSIGNED}. Nous avons retenu la séquence plus précise \code{OPEN}\ra\code{ASSIGNED}\ra\code{IN_PROGRESS}. Ce choix est cohérent avec l'existence du statut \code{ASSIGNED}, avec l'action d'affectation réservée à l'administrateur et avec la liste des incidents affectés du technicien.
+
+%============================================================
+\section{Authentification et JWT}
+%============================================================
+
+\subsection{Inscription et connexion}
+
+Nous exposons les routes publiques suivantes :
+\begin{itemize}
+  \item \code{POST /auth/register} ;
+  \item \code{POST /auth/login} ;
+  \item \code{POST /auth/refresh} ;
+  \item \code{POST /auth/logout}.
+\end{itemize}
+
+Lors de l'inscription, nous validons le nom, l'email et le mot de passe, nous normalisons l'email, nous vérifions son unicité et nous encodons le mot de passe. Le rôle est forcé à \code{EMPLOYEE}.
+
+Lors de la connexion, nous refusons les identifiants incorrects et les utilisateurs désactivés avec un message générique. En cas de succès, nous renvoyons un access token JWT, le rôle, le nom complet et un refresh token.
+
+\subsection{Claims et expiration}
+
+Un \emph{claim} est une information, sous forme de paire clé--valeur, contenue dans la charge utile (\emph{payload}) du JWT. \code{JwtService} ajoute au JWT :
+\begin{itemize}
+  \item l'email dans le sujet (\code{sub}) ;
+  \item la date d'émission (\code{iat}) ;
+  \item la date d'expiration (\code{exp}) ;
+  \item le rôle dans le claim \code{role}.
+\end{itemize}
+
+Nous signons le JWT en HS256. Nous ne reproduisons ni la clé secrète ni un token complet dans ce rapport.
+
+\code{JwtAuthenticationFilter} lit l'en-tête \code{Authorization}, vérifie le token, extrait l'email et recharge l'utilisateur. L'utilisateur doit encore exister et être activé. Nous reconstruisons l'autorité à partir du rôle en base et non à partir du claim \code{role} seul : une modification de rôle ou une désactivation de compte prend ainsi effet immédiatement, même si un token plus ancien circule encore.
+
+La vérification du JWT contrôle la signature et l'expiration. La durée de l'access token en développement est de \textbf{5 minutes (300\,000 ms)}.
+
+\subsection{Access token et refresh token}
+
+L'access token est le JWT court utilisé dans l'en-tête \code{Authorization}. Le refresh token sert à obtenir une nouvelle paire lorsque l'access token expire.
+
+Le refresh token est implémenté. Nous stockons uniquement son hash avec ses dates de création, d'expiration et de révocation. L'appel à \code{/auth/refresh} effectue une rotation : l'ancien token est invalidé et une nouvelle paire est produite. \code{/auth/logout} révoque le refresh token fourni.
+
+\subsection{Flux de renouvellement}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize, >=Latex,
+  part/.style={draw=primary, fill=soft, rounded corners=2pt, align=center,
+               text width=2.55cm, minimum height=0.9cm, inner sep=3pt},
+  life/.style={dashed, color=primary!55},
+  msg/.style={->, thick, color=primary},
+  ret/.style={->, thick, dashed, color=accent},
+  ml/.style={align=center, inner sep=1.5pt, text width=3.1cm, fill=white, execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000\relax}}]
+
+  \def\top{0}
+  \def\bot{-12.6}
+  \node[part] (R) at (0,\top) {React / Axios};
+  \node[part] (A) at (3.4,\top) {API Spring Boot};
+  \node[part] (F) at (6.8,\top) {JwtAuthentication\\Filter};
+  \node[part] (T) at (10.2,\top) {AuthService / RefreshTokenService};
+  \node[part] (B) at (13.6,\top) {Base de données};
+
+  \foreach \p/\x in {R/0,A/3.4,F/6.8,T/10.2,B/13.6} {
+    \draw[life] (\p.south) -- (\x,\bot);
+  }
+
+  % 1
+  \draw[msg] (0,-1.7) -- (3.4,-1.7) node[ml, midway, above] {Requête avec access token};
+  % 2
+  \draw[msg] (3.4,-2.9) -- (6.8,-2.9) node[ml, midway, above] {Vérification du JWT};
+  % 3
+  \draw[ret] (6.8,-4.1) -- (3.4,-4.1) node[ml, midway, above] {JWT expiré ou invalide};
+  % 4
+  \draw[ret] (3.4,-5.3) -- (0,-5.3) node[ml, midway, above] {HTTP 401};
+  % 5
+  \draw[msg] (0,-6.8) -- (3.4,-6.8) node[ml, midway, above] {POST /auth/refresh avec refresh token};
+  % 6
+  \draw[msg] (3.4,-8.0) -- (10.2,-8.0) node[ml, midway, above] {Rotation du refresh token};
+  % 7
+  \draw[msg] (10.2,-9.2) -- (13.6,-9.2) node[ml, midway, above] {Vérifier hash, expiration et révocation};
+  % 8
+  \draw[ret] (10.2,-10.5) -- (3.4,-10.5) node[ml, midway, above] {Nouvel access token et nouveau refresh token};
+  % 9
+  \draw[ret] (3.4,-11.5) -- (0,-11.5) node[ml, midway, above] {Réponse de session};
+  % 10
+  \draw[msg] (0,-12.4) -- (3.4,-12.4) node[ml, midway, above] {Rejoue la requête initiale};
+\end{tikzpicture}}
+\caption{Renouvellement de session avec le refresh token (traits pointillés : réponses)}\label{fig:refresh}
+\end{figure}
+
+%============================================================
+\section{Configuration Spring Security et rôles}
+%============================================================
+
+\code{SecurityConfig} configure CORS pour \code{http://localhost:5173}, désactive CSRF, impose une politique de session \code{STATELESS}, place le filtre JWT avant le filtre standard et fournit des réponses JSON pour les erreurs 401 et 403.
+
+\begin{table}[H]
+\centering
+\caption{Règles HTTP générales}\label{tab:regles}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\small}p{4.2cm}X@{}}
+\tablehead \hdr{Ressource} & \hdr{Règle configurée} \\
+/auth/**          & publique \\
+\rowcolor{soft} /h2-console/** & autorisée dans la configuration actuelle \\
+OPTIONS           & publique pour le CORS \\
+\rowcolor{soft} /api/**        & authentification obligatoire \\
+autres routes     & autorisées par la règle générale actuelle \\
+\end{tabularx}
+\end{table}
+
+\code{@EnableMethodSecurity} active les annotations de sécurité placées sur les contrôleurs.
+
+\begin{table}[H]
+\centering
+\caption{Autorisations par rôle}\label{tab:roles}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\small}p{5.6cm}X@{}}
+\tablehead \hdr{Expression} & \hdr{Utilisation réelle} \\
+hasRole('EMPLOYEE')   & créer un incident et consulter sa liste personnelle \\
+\rowcolor{soft} hasRole('TECHNICIAN') & consulter les incidents affectés \\
+hasRole('ADMIN')      & administrer les utilisateurs, consulter la file globale et affecter \\
+\rowcolor{soft} hasAnyRole('TECHNICIAN', 'ADMIN') & modifier un statut et ajouter une note \\
+isAuthenticated()     & consulter un détail, l'historique ou les commentaires \\
+\end{tabularx}
+\end{table}
+
+{\sloppy Avec Spring Security, \code{hasRole('EMPLOYEE')} recherche habituellement l'autorité \code{ROLE_EMPLOYEE}. Nous construisons précisément les autorités sous la forme \code{ROLE_} suivie du rôle en base. \code{hasAuthority('...')} comparerait une autorité exacte sans ajouter automatiquement le préfixe ; cette expression n'est pas utilisée dans notre code.\par}
+
+%============================================================
+\section{Contrôle du propriétaire et règles métier}
+%============================================================
+
+\code{CurrentUserService} récupère l'objet \code{Authentication} depuis \code{SecurityContextHolder}. Nous vérifions que l'authentification existe, qu'elle est active et qu'elle n'est pas anonyme. Le nom de l'authentification correspond à l'email placé dans le sujet du JWT, puis nous relisons l'utilisateur en base.
+
+Pour lire un incident, nous autorisons :
+\begin{itemize}
+  \item l'administrateur ;
+  \item l'utilisateur qui a créé l'incident ;
+  \item le technicien auquel l'incident est affecté.
+\end{itemize}
+
+Pour modifier le statut, nous vérifions qu'un technicien est réellement affecté à l'incident. L'administrateur peut affecter un technicien actif. Un incident \code{CLOSED} ne peut plus être modifié.
+
+Les transitions implémentées sont :
+\begin{itemize}
+  \item \code{OPEN}\ra\code{IN_PROGRESS} pour l'administrateur ;
+  \item \code{ASSIGNED}\ra\code{IN_PROGRESS} ;
+  \item \code{IN_PROGRESS}\ra\code{RESOLVED} ;
+  \item \code{RESOLVED}\ra\code{CLOSED} ou \code{RESOLVED}\ra\code{IN_PROGRESS} ;
+  \item aucune transition depuis \code{CLOSED}.
+\end{itemize}
+
+{\sloppy \code{Principal} est l'interface Java standard qui représente l'utilisateur authentifié ; \code{Authentication} l'étend en ajoutant notamment les autorités. Nous n'utilisons pas de paramètre \code{Principal} dans les contrôleurs : nous avons choisi \code{Authentication} via \code{SecurityContextHolder}, puis une recherche de l'utilisateur en base. Ce contrôle est effectué côté serveur, dans \code{IncidentService} : masquer un bouton dans React ne suffirait pas.\par}
+
+%============================================================
+\section{Validation et gestion des exceptions}
+%============================================================
+
+\subsection{Validation}
+
+Nous utilisons les annotations Jakarta Validation suivantes :
+\begin{itemize}
+  \item \code{@NotBlank} pour les champs textuels obligatoires ;
+  \item \code{@Email} pour le format des adresses ;
+  \item \code{@Size} pour limiter les longueurs ;
+  \item \code{@NotNull} pour les catégories et priorités obligatoires ;
+  \item \code{@Valid} sur les corps de requête des contrôleurs.
+\end{itemize}
+
+Une erreur de validation produit une réponse HTTP 400 avec un message général et une liste des champs invalides.
+
+\subsection{Gestion centralisée}
+
+Nous utilisons \code{@RestControllerAdvice}, spécialisation adaptée aux réponses JSON de \code{@ControllerAdvice}. \code{GlobalExceptionHandler} traite, grâce à des méthodes \code{@ExceptionHandler}, les \code{ApiException}, les erreurs de validation, les corps JSON illisibles, les conflits d'intégrité, les accès refusés et les erreurs imprévues.
+
+Les réponses utilisent la structure \code{ErrorResponse} composée de \code{status}, \code{message} et, si nécessaire, \code{errors}.
+
+\begin{table}[H]
+\centering
+\caption{Signification des codes HTTP dans le projet}\label{tab:http}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}p{1.4cm}X@{}}
+\tablehead \hdr{Code} & \hdr{Cas traité dans le projet} \\
+400 & données invalides, JSON illisible, transition interdite ou incident clôturé \\
+\rowcolor{soft} 401 & JWT absent, invalide ou expiré, identifiants incorrects ou utilisateur désactivé \\
+403 & utilisateur authentifié sans droit ou technicien non affecté \\
+\rowcolor{soft} 404 & incident, utilisateur ou technicien introuvable \\
+409 & email déjà utilisé ou conflit d'intégrité \\
+\end{tabularx}
+\end{table}
+
+{\sloppy Nous produisons les erreurs de sécurité 401 et 403 avec \code{RestAuthenticationEntryPoint} et \code{RestAccessDeniedHandler}. Les exceptions métier \code{UnauthorizedException}, \code{ForbiddenException}, \code{BadRequestException} et \code{NotFoundException} passent par \code{GlobalExceptionHandler} via \code{ApiException}.\par}
+
+%============================================================
+\section{Frontend React}
+%============================================================
+
+\subsection{Routes protégées}
+
+\code{ProtectedRoute} redirige vers \code{/login} lorsqu'aucun JWT n'est présent. \code{RoleRoute} compare le rôle de session et redirige vers \code{/access-denied} si le rôle ne correspond pas.
+
+Les routes déclarées sont notamment :
+\begin{itemize}
+  \item \code{/dashboard} et \code{/profile} pour tout utilisateur connecté ;
+  \item \code{/incidents/my} et \code{/incidents/new} pour \code{EMPLOYEE} ;
+  \item \code{/incidents/assigned} pour \code{TECHNICIAN} ;
+  \item \code{/admin/users} et \code{/admin/incidents} pour \code{ADMIN} ;
+  \item \code{/incidents/:id} pour le détail d'un incident.
+\end{itemize}
+
+La protection frontend améliore l'expérience utilisateur, mais la décision de sécurité reste celle du backend.
+
+\subsection{Intercepteurs Axios}
+
+L'intercepteur de requête lit l'access token dans \code{localStorage} et ajoute \code{Authorization: Bearer ...}.
+
+L'intercepteur de réponse intercepte un 401 sur une route non liée à l'authentification, appelle \code{/auth/refresh}, sauvegarde la nouvelle session puis rejoue la requête initiale. \code{refreshPromise} évite plusieurs renouvellements concurrents. Si le renouvellement échoue, nous supprimons la session et redirigeons l'utilisateur vers \code{/login}.
+
+Les tokens et les informations d'affichage sont conservés dans \code{localStorage} sous les clés \code{jwt}, \code{refreshToken}, \code{role} et \code{fullName}.
+
+\subsection{Dashboards, historique et notes}
+
+Le dashboard adapte ses données au rôle :
+\begin{itemize}
+  \item l'employé voit ses incidents et leurs compteurs ;
+  \item le technicien voit les incidents affectés ;
+  \item l'administrateur voit les statistiques et la file globale.
+\end{itemize}
+
+La page de détail charge l'incident, son historique et ses notes. Elle permet à l'administrateur d'affecter un technicien et aux rôles autorisés d'ajouter une note ou de demander un changement d'état. Le backend reste l'autorité finale.
+
+%============================================================
+\section{Historique et scénario du §24}
+%============================================================
+
+Nous avons exécuté \code{scripts/phase4-scenario.ps1}. Le scénario vérifie 17 étapes : création de deux employés, vérification d'un technicien actif, connexions, déclaration de trois incidents, isolation entre employés, consultation administrateur, affectation, consultation technicien, transitions, ajout d'une note et consultation finale. La sortie complète est reproduite en annexe~A.
+
+\begin{table}[!htbp]
+\centering
+\caption{Correspondance des étapes du §24}\label{tab:scenario}
+\small
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\tablehead \hdr{Étapes} & \hdr{Action réalisée} & \hdr{Résultat observé} \\
+1--2   & créer deux comptes employés & comptes créés \\
+\rowcolor{soft} 3 & vérifier les comptes de développement et un technicien actif & technicien disponible \\
+4      & connecter le premier employé & connexion réussie \\
+\rowcolor{soft} 5 & déclarer deux incidents & deux incidents créés \\
+6--7   & connecter le second employé et déclarer son incident & incident créé par un second propriétaire \\
+\rowcolor{soft} 8 & tester l'isolation entre employés & accès refusé \\
+9--10  & connecter l'administrateur et consulter la file globale & incident visible pour ADMIN \\
+\rowcolor{soft} 11 & affecter le premier incident & statut \code{ASSIGNED} \\
+12--13 & connecter le technicien et consulter ses affectations & incident visible dans sa file \\
+\rowcolor{soft} 14 & faire progresser le statut & \code{ASSIGNED}\ra\code{IN_PROGRESS}\ra\code{RESOLVED} \\
+15     & ajouter une note & note enregistrée \\
+\rowcolor{soft} 16--17 & reconnecter l'employé et consulter le résultat & état, historique et note vérifiés \\
+\end{tabularx}
+\end{table}
+
+Nous avons donc retenu \code{ASSIGNED} comme étape intermédiaire, en cohérence avec les statuts du §3.5 du sujet. La formulation abrégée du §24 peut être lue comme une présentation simplifiée du traitement après affectation.
+
+%============================================================
+\section{Tests automatisés et captures}
+%============================================================
+
+\subsection{Résultat Maven}
+
+Nous avons exécuté la commande suivante depuis \code{incidents-api} :
+
+\begin{Verbatim}
+.\mvnw.cmd test
+\end{Verbatim}
+
+Le résultat est \mbox{\textbf{\textcolor{okgreen}{BUILD SUCCESS}}}, avec \code{Tests run: 15, Failures: 0, Errors: 0, Skipped: 0}.
+
+\subsection{Tests obligatoires du §25}
+
+\begin{table}[!htbp]
+\centering
+\caption{Tests obligatoires du §25 et résultats}\label{tab:tests25}
+\footnotesize
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{4.3cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{2.2cm}@{}}
+\tablehead \hdr{§25} & \hdr{Test automatisé} & \hdr{Résultat} \\
+1.~Route protégée sans JWT & \code{protectedRouteWithoutJwtReturns401} & \pass\ -- 401 \\
+\rowcolor{soft} 2.~JWT invalide & \code{invalidJwtReturns401} & \pass\ -- 401 \\
+3.~JWT expiré & \code{expiredJwtReturns401} & \pass\ -- 401 \\
+\rowcolor{soft} 4.~EMPLOYEE sur route ADMIN & \code{employeeCannotAccessAdminRoute} & \pass\ -- 403 \\
+5.~Incident d'un autre employé & \code{employeeCannotReadAnotherEmployeesIncident} & \pass\ -- 403 \\
+\rowcolor{soft} 6.~TECHNICIAN non affecté & \code{technicianCannotModifyUnassignedIncident} & \pass\ -- 403 \\
+7.~Utilisateur désactivé & \code{disabledUserCannotLoginOrUseExistingToken} & \pass\ -- 401 \\
+\rowcolor{soft} 8.~Email dupliqué & \code{duplicateEmailReturns409} & \pass\ -- 409 \\
+9.~Incident invalide & \code{invalidIncidentReturns400WithFieldErrors} & \pass\ -- 400 \\
+\end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+\centering
+\caption{Tests complémentaires}\label{tab:tests-compl}
+\footnotesize
+\begin{tabularx}{\linewidth}{@{}Xp{2cm}@{}}
+\tablehead \hdr{Test automatisé} & \hdr{Résultat} \\
+\code{closedIncidentCannotChangeStatus} & \pass \\
+\rowcolor{soft} \code{validStatusTransitionsAndReopeningAreAccepted} & \pass \\
+\code{registrationAlwaysCreatesEmployeeEvenWhenAdminIsSent} & \pass \\
+\rowcolor{soft} \code{refreshRotatesTheRefreshTokenAndReturnsANewAccessToken} & \pass \\
+\code{logoutRevokesTheRefreshToken} & \pass \\
+\rowcolor{soft} \code{disabledUserCannotRefreshAnExistingRefreshToken} & \pass \\
+\end{tabularx}
+\end{table}
+
+\subsection{Captures Postman}
+
+\capture{01_postman_login_employee.png}%
+  {Connexion réussie d'un employé dans Postman (tokens masqués)}{fig:login}
+
+La figure~\ref{fig:login} montre la requête \code{POST /auth/login}, la réponse \code{200 OK}, le rôle \code{EMPLOYEE}, le nom \code{Employé Un} et les champs de session. Les valeurs des tokens sont masquées.
+
+\capture{02_postman_create_incident_employee.png}%
+  {Création réussie d'un incident par l'employé}{fig:create}
+
+La figure~\ref{fig:create} montre la requête \code{POST /api/incidents} avec le titre « Tentative de phishing détectée », la catégorie \code{PHISHING}, la priorité \code{HIGH} et la réponse \code{200 OK}. La réponse indique le statut \code{OPEN} et le créateur \code{Employé Un}.
+
+\capture{03_postman_employee_my_incidents.png}%
+  {Consultation de la liste personnelle de l'employé}{fig:my}
+
+La figure~\ref{fig:my} montre la requête \code{GET /api/incidents/my}, l'utilisation du Bearer Token sous forme de variable Postman \code{{{employeeToken}}}, la réponse \code{200 OK} et l'incident de phishing dans la liste.
+
+Les autres vérifications du §25 sont couvertes par les tests automatisés des tableaux~\ref{tab:tests25} et~\ref{tab:tests-compl}, ainsi que par le scénario de l'annexe~A.
+
+%============================================================
+\section{Écarts et limites}
+%============================================================
+
+\subsection{Choix de modélisation JPA}
+
+Nous avons choisi des relations unidirectionnelles \code{ManyToOne} en \code{LAZY} et l'utilisation de DTO. Les collections inverses \code{OneToMany} ne sont pas déclarées. Ce choix est adapté aux consultations ciblées et limite les chargements implicites, mais il ne présente pas un modèle bidirectionnel complet.
+
+\subsection{Transition d'état}
+
+Nous utilisons \code{ASSIGNED} entre \code{OPEN} et \code{IN_PROGRESS}, car ce statut est défini au §3.5 et correspond à l'action d'affectation. Le §24 résume toutefois la séquence par \code{OPEN}\ra\code{IN_PROGRESS}. Nous conservons cette différence comme un choix explicite de modélisation et non comme une transition cachée.
+
+\subsection{Console H2}
+
+La route \code{/h2-console/**} est autorisée dans \code{SecurityConfig} sans condition explicite liée au profil actif. La configuration MySQL désactive H2, mais nous devrions limiter encore cette autorisation au développement ou la supprimer en production.
+
+\subsection{Configuration CORS}
+
+La propriété \code{app.cors.allowed-origin} existe, mais l'origine est écrite directement dans \code{SecurityConfig}. Nous devrions utiliser effectivement la propriété afin d'éviter une configuration dupliquée.
+
+\subsection{Stockage des tokens}
+
+Le frontend stocke l'access token et le refresh token dans \code{localStorage}. Une faille XSS pourrait les exposer. Nous pourrions placer le refresh token dans un cookie \code{HttpOnly}, \code{Secure} et \code{SameSite} adapté, avec une stratégie CSRF cohérente.
+
+\subsection{CSRF et production}
+
+Nous désactivons CSRF parce que l'API utilise une session stateless et un en-tête Bearer. Ce choix doit être réévalué si nous passons à une authentification par cookies. La clé JWT de développement doit également être remplacée par une clé externe, longue et renouvelée, avec HTTPS.
+
+%============================================================
+\section{Conclusion}
+%============================================================
+
+Nous avons mis en œuvre une authentification JWT stateless, une séparation des rôles et un contrôle métier du propriétaire et du technicien affecté. Les validations, les réponses d'erreur, l'historique et les notes sont intégrés dans l'API. Le frontend protège les routes, adapte les dashboards aux rôles et renouvelle automatiquement la session avec un refresh token tournant.
+
+La commande Maven a réussi avec 15 tests sur 15. Les neuf contrôles obligatoires du §25 sont couverts par des tests automatisés. Le scénario du §24 a également réussi ses 17 étapes et a vérifié l'état final, l'historique et la note de traitement.
+
+%============================================================
+\section{Sources du projet}
+%============================================================
+
+Nous avons utilisé les sources suivantes :
+\begin{itemize}
+  \item sujet \codelong{devoir_jwt_spring_security_react.pdf} ;
+  \item classes backend sous \codelong{incidents-api/src/main/java/ma/formation/incidentsapi/} ;
+  \item configurations sous \codelong{incidents-api/src/main/resources/} ;
+  \item tests sous \codelong{incidents-api/src/test/java/ma/formation/incidentsapi/SecurityIntegrationTest.java} ;
+  \item composants frontend sous \code{incidents-front/src/} ;
+  \item scripts \code{scripts/phase4-scenario.ps1} et \codelong{scripts/phase7-automated-verification.ps1}.
+\end{itemize}
+
+%============================================================
+\appendix
+\section{Sortie réelle du scénario du §24}
+%============================================================
+
+Nous avons exécuté \code{scripts/phase4-scenario.ps1} avec le backend démarré. Le script n'affiche aucun access token ni refresh token : aucun secret n'apparaît donc dans cette sortie.
+
+\begin{Verbatim}[fontsize=\scriptsize]
+[01/17] Création du premier compte EMPLOYEE
+[02/17] Création du deuxième compte EMPLOYEE
+[03/17] Vérification des comptes TECHNICIAN et ADMIN de développement
+[04/17] Connexion du premier employé
+[05/17] Déclaration de deux incidents par le premier employé
+[06/17] Connexion du deuxième employé
+[07/17] Déclaration d'un incident par le deuxième employé
+[08/17] Vérification de l'isolation entre employés
+[09/17] Connexion de l'administrateur
+[10/17] Consultation de tous les incidents par ADMIN
+[11/17] Affectation du premier incident au technicien
+[12/17] Connexion du technicien
+[13/17] Consultation des incidents affectés par TECHNICIAN
+[14/17] Transitions ASSIGNED -> IN_PROGRESS -> RESOLVED
+[15/17] Ajout d'une note de traitement
+[16/17] Reconnexion du premier employé
+[17/17] Vérification de l'état final, de l'historique et de la note
+
+SCÉNARIO PHASE 4 RÉUSSI
+Incident vérifié: #8 | état final: RESOLVED | événements: 4 | notes: 1
+Comptes temporaires créés:
+  scenario.employee1.20261030010017@example.com
+  scenario.employee2.20261030010017@example.com
+\end{Verbatim}
+
+\end{document}

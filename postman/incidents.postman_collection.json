@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "e2d7b4c9-4d0b-4c0c-9f20-incidents-api",
+    "name": "Incident Desk - API et sécurité",
+    "description": "Collection de démonstration et de tests de sécurité pour l’API incidents-api. Importer aussi incidents.postman_environment.json puis sélectionner l’environnement local. Les descriptions indiquent le résultat attendu. Aucun JWT réel n’est inclus.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ],
+  "item": [
+    {
+      "name": "00 - Préparation",
+      "description": "Exécuter ces requêtes dans l’ordre. Elles enregistrent les tokens et les identifiants nécessaires aux tests dans l’environnement Postman.",
+      "item": [
+        {
+          "name": "Login EMPLOYEE - enregistre employeeToken",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{employeeEmail}}\",\n  \"password\": \"{{employeePassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Attendu : 200 et un objet contenant token, role=EMPLOYEE et fullName. Le script de test stocke le token sans l’afficher."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Connexion EMPLOYEE réussie', function () { pm.response.to.have.status(200); });", "if (pm.response.code === 200) { pm.environment.set('employeeToken', pm.response.json().token); pm.environment.set('refreshToken', pm.response.json().refreshToken); }"] } }]
+        },
+        {
+          "name": "Login ADMIN - enregistre adminToken",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Attendu : 200 et role=ADMIN. Le script enregistre adminToken dans l’environnement."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Connexion ADMIN réussie', function () { pm.response.to.have.status(200); });", "if (pm.response.code === 200) { pm.environment.set('adminToken', pm.response.json().token); }"] } }]
+        },
+        {
+          "name": "Login TECHNICIAN - enregistre technicianToken",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{technicianEmail}}\",\n  \"password\": \"{{technicianPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Attendu : 200 et role=TECHNICIAN. Le script enregistre technicianToken dans l’environnement."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Connexion TECHNICIAN réussie', function () { pm.response.to.have.status(200); });", "if (pm.response.code === 200) { pm.environment.set('technicianToken', pm.response.json().token); }"] } }]
+        },
+        {
+          "name": "Préparer les identifiants d’incidents",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }],
+            "url": "{{baseUrl}}/api/incidents/my",
+            "description": "Attendu : 200. Le script enregistre le premier incident de l’employé dans employeeIncidentId."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Liste employee accessible', function () { pm.response.to.have.status(200); });", "const data = pm.response.json();", "if (data.length > 0) { pm.environment.set('employeeIncidentId', data[0].id); }"] } }]
+        },
+        {
+          "name": "Préparer les incidents admin et l’utilisateur désactivable",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/users",
+            "description": "Attendu : 200. Enregistre disabledUserId à partir de disabledEmail et technicianId à partir du premier TECHNICIAN actif."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Liste utilisateurs accessible', function () { pm.response.to.have.status(200); });", "const users = pm.response.json();", "const disabled = users.find((user) => user.email === pm.environment.get('disabledEmail'));", "const technician = users.find((user) => user.role === 'TECHNICIAN' && user.enabled);", "if (disabled) { pm.environment.set('disabledUserId', disabled.id); }", "if (technician) { pm.environment.set('technicianId', technician.id); }"] } }]
+        },
+        {
+          "name": "Désactiver le compte de test pour le test 7",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/users/{{disabledUserId}}/disable",
+            "description": "Préparation du test 7. Attendu : 200. Après cette requête, le login de disabledEmail doit être refusé en 401."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Compte désactivé pour le test', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Préparer otherIncidentId et unassignedIncidentId",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/incidents",
+            "description": "Attendu : 200. Enregistre un incident d’un autre créateur et un incident non affecté pour les tests 5 et 6."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Liste globale accessible', function () { pm.response.to.have.status(200); });", "const data = pm.response.json();", "const other = data.find((item) => item.createdBy && item.createdBy.email !== pm.environment.get('employeeEmail'));", "const unassigned = data.find((item) => !item.assignedTo);", "if (other) { pm.environment.set('otherIncidentId', other.id); }", "if (unassigned) { pm.environment.set('unassignedIncidentId', unassigned.id); }"] } }]
+        }
+      ]
+    },
+    {
+      "name": "25 - Tests de sécurité obligatoires",
+      "description": "Les 9 tests du sujet. Les descriptions précisent le résultat attendu. Exécuter d’abord le dossier 00 - Préparation.",
+      "item": [
+        {
+          "name": "01 - API protégée sans JWT",
+          "request": { "method": "GET", "header": [], "auth": { "type": "noauth" }, "url": "{{baseUrl}}/api/profile", "description": "Attendu : 401 Unauthorized avec { status: 401, message: ... }. Aucun header Authorization ne doit être envoyé." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Sans JWT => 401', function () { pm.response.to.have.status(401); });"] } }]
+        },
+        {
+          "name": "02 - JWT invalide",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer invalid.jwt.value" }], "url": "{{baseUrl}}/api/profile", "description": "Attendu : 401 Unauthorized. Le backend doit refuser un JWT dont la signature ou le format est invalide." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('JWT invalide => 401', function () { pm.response.to.have.status(401); });"] } }]
+        },
+        {
+          "name": "03 - JWT expiré",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{expiredToken}}" }], "url": "{{baseUrl}}/api/profile", "description": "Attendu : 401 Unauthorized. Préparer expiredToken avec un token expiré : lancer temporairement le backend avec JWT_EXPIRATION_MS=1, se connecter, attendre son expiration, puis renseigner la variable sans l’afficher dans une capture." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('JWT expiré => 401', function () { pm.response.to.have.status(401); });"] } }]
+        },
+        {
+          "name": "04 - EMPLOYEE sur route ADMIN",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }], "url": "{{baseUrl}}/api/admin/users", "description": "Attendu : 403 Forbidden. Un JWT valide ne suffit pas : le rôle EMPLOYEE ne peut pas consulter les utilisateurs." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('EMPLOYEE sur ADMIN => 403', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "05 - EMPLOYEE sur incident d’un autre utilisateur",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }], "url": "{{baseUrl}}/api/incidents/{{otherIncidentId}}", "description": "Attendu : 403 Forbidden. Renseigner otherIncidentId avec un incident appartenant à un autre employé. Le contrôle doit être effectué par le backend, pas seulement par React." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Propriété incident => 403', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "06 - TECHNICIAN sur incident non affecté",
+          "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{technicianToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/incidents/{{unassignedIncidentId}}/status", "description": "Attendu : 403 Forbidden. Renseigner unassignedIncidentId avec un incident affecté à un autre technicien ou non affecté." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Technicien non affecté => 403', function () { pm.response.to.have.status(403); });"] } }]
+        },
+        {
+          "name": "07 - Utilisateur désactivé",
+          "request": { "method": "POST", "header": [], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{disabledEmail}}\",\n  \"password\": \"{{disabledPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth/login", "description": "Attendu : 401 Unauthorized. Exécuter d’abord la requête de préparation qui désactive disabledUserId. Le même compte doit aussi être refusé avec un token obtenu avant désactivation." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Utilisateur désactivé => 401', function () { pm.response.to.have.status(401); });"] } }]
+        },
+        {
+          "name": "08 - Email déjà utilisé",
+          "request": { "method": "POST", "header": [], "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Doublon\",\n  \"email\": \"{{employeeEmail}}\",\n  \"password\": \"NewPassword123!\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth/register", "description": "Attendu : 409 Conflict avec le message Email déjà utilisé. L’inscription d’un email existant doit être refusée." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Email dupliqué => 409', function () { pm.response.to.have.status(409); });"] } }]
+        },
+        {
+          "name": "09 - Création d’incident invalide",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }], "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/incidents", "description": "Attendu : 400 Bad Request avec errors listant title, description, category et priority." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Incident invalide => 400', function () { pm.response.to.have.status(400); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "26 - Refresh token",
+      "description": "Le refresh token est stocké sous forme de hash côté serveur, renouvelé par rotation et révoqué par la déconnexion. Exécuter d’abord Login EMPLOYEE dans 00 - Préparation.",
+      "item": [
+        {
+          "name": "01 - Renouveler l’access token",
+          "request": { "method": "POST", "header": [], "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth/refresh", "description": "Attendu : 200 avec un nouvel access token et un nouveau refresh token. L’ancien refresh token est invalidé par rotation." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Refresh réussi', function () { pm.response.to.have.status(200); });", "if (pm.response.code === 200) { pm.environment.set('employeeToken', pm.response.json().token); pm.environment.set('refreshToken', pm.response.json().refreshToken); }"] } }]
+        },
+        {
+          "name": "02 - Révoquer le refresh token à la déconnexion",
+          "request": { "method": "POST", "header": [], "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth/logout", "description": "Attendu : 204 No Content. Le refresh token courant est révoqué côté serveur et ne peut plus être utilisé." },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Logout => 204', function () { pm.response.to.have.status(204); });"] } }]
+        }
+      ]
+    }
+  ]
+}

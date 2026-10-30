@@ -1,0 +1,5 @@
+.tools/
+incidents-api/target/
+incidents-front/node_modules/
+incidents-front/dist/
+*.log
